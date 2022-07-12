@@ -1,7 +1,12 @@
 Laravel Prestashop Web Service
 ========
 
-Laravel 5 wrapper for Prestashop Web Service Library
+Laravel wrapper for Prestashop Web Service Library.
+
+Differences from original package:
+
+* Compatible with Laravel 8 and 9.
+* Adds curl-multi support, for concurrent and async Prestashop requests. 
 
 Installation
 ------------
