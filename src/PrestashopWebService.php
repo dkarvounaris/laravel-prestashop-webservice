@@ -2,7 +2,7 @@
 
 namespace Protechstudio\PrestashopWebService;
 
-use PrestaShopWebservice as PSLibrary;
+use Protechstudio\PrestashopWebService\PrestashopWebService as PSLibrary;
 use SimpleXMLElement;
 
 class PrestashopWebService extends PrestashopWebServiceLibrary

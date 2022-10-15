@@ -8,8 +8,10 @@ Differences from original package:
 * Compatible with Laravel 8 and 9.
 * Adds curl-multi support, for concurrent and async Prestashop requests. 
 
+* PATCH API support
 Installation
 ------------
+Important: Install as usually and then checkout to branch dev-multi.
 
 Require this package with composer using the following command:
 

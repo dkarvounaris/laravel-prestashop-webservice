@@ -119,6 +119,25 @@ class PrestashopWebServiceLibrary
     }
 
     /**
+     * Provides default parameters for the curl connection(s)
+     * @return array Default parameters for curl connection(s)
+     */
+    protected function getCurlDefaultParams()
+    {
+        $defaultParams = array(
+            CURLOPT_HEADER => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLINFO_HEADER_OUT => true,
+            CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
+            CURLOPT_USERPWD => $this->key . ':',
+            CURLOPT_HTTPHEADER => array('Expect:'),
+            CURLOPT_SSL_VERIFYPEER => config('app.env') === 'local' ? 0 : 1,
+            CURLOPT_SSL_VERIFYHOST => config('app.env') === 'local' ? 0 : 2 // value 1 is not accepted https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
+        );
+        return $defaultParams;
+    }
+
+    /**
      * Prepares and validate a CURL request to PrestaShop WebService. Can throw exception.
      * @param string $url Resource name
      * @param mixed $curl_params CURL parameters (sent to curl_set_opt)
@@ -127,16 +146,7 @@ class PrestashopWebServiceLibrary
      */
     protected function executeRequest($url, $curl_params = array())
     {
-        $defaultParams = array(
-            CURLOPT_HEADER => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLINFO_HEADER_OUT => true,
-            CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
-            CURLOPT_USERPWD => $this->key.':',
-            CURLOPT_HTTPHEADER => array( 'Expect:' ),
-            CURLOPT_SSL_VERIFYPEER => config('app.env') === 'local' ? 0 : 1,
-            CURLOPT_SSL_VERIFYHOST => config('app.env') === 'local' ? 0 : 2 // value 1 is not accepted https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
-        );
+        $defaultParams = $this->getCurlDefaultParams();
 
         $curl_options = array();
         foreach ($defaultParams as $defkey => $defval) {
@@ -184,7 +194,7 @@ class PrestashopWebServiceLibrary
         $this->printDebug('HTTP REQUEST HEADER', $info['request_header']);
         $this->printDebug('HTTP RESPONSE HEADER', $header);
 
-        if ($curl_params[CURLOPT_CUSTOMREQUEST] == 'PUT' || $curl_params[CURLOPT_CUSTOMREQUEST] == 'POST') {
+        if ($curl_params[CURLOPT_CUSTOMREQUEST] == 'PUT' || $curl_params[CURLOPT_CUSTOMREQUEST] == 'POST' || $curl_params[CURLOPT_CUSTOMREQUEST] == 'PATCH') {
             $this->printDebug('XML SENT', urldecode($curl_params[CURLOPT_POSTFIELDS]));
         }
         if ($curl_params[CURLOPT_CUSTOMREQUEST] != 'DELETE' && $curl_params[CURLOPT_CUSTOMREQUEST] != 'HEAD') {
@@ -419,7 +429,7 @@ class PrestashopWebServiceLibrary
      * @return SimpleXMLElement
      * @throws PrestashopWebServiceException
      */
-    public function edit($options)
+    public function edit($options, $use_patch = false)
     {
         $xml = '';
         if (isset($options['url'])) {
@@ -441,7 +451,11 @@ class PrestashopWebServiceLibrary
             throw new PrestashopWebServiceException('Bad parameters given');
         }
 
-        $request = $this->executeRequest($url, array(CURLOPT_CUSTOMREQUEST => 'PUT', CURLOPT_POSTFIELDS => $xml));
+        if ($use_patch) {
+            $request = $this->executeRequest($url, array(CURLOPT_CUSTOMREQUEST => 'PATCH', CURLOPT_POSTFIELDS => $xml));
+        } else {
+            $request = $this->executeRequest($url, array(CURLOPT_CUSTOMREQUEST => 'PUT', CURLOPT_POSTFIELDS => $xml));
+        }
         $this->checkRequest($request);// check the response validity
         return $this->parseXML($request['response']);
     }
